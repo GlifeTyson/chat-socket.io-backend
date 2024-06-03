@@ -1,0 +1,76 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mongodb"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id               String         @id @default(auto()) @map("_id") @db.ObjectId
+    username         String         @unique
+    gender           String
+    fullName         String
+    password         String
+    profilePicture   String
+    createdAt        DateTime       @default(now())
+    updatedAt        DateTime       @updatedAt
+    deletedAt        DateTime?
+    groups           Group[]        @relation(fields: [groupIds], references: [id])
+    messagesSent     Message[]      @relation("MessagesSent")
+    messagesReceived Message[]      @relation("MessagesReceived")
+    conversations1   Conversation[] @relation("User1Conversations")
+    conversations2   Conversation[] @relation("User2Conversations")
+    groupIds         String[]       @db.ObjectId
+}
+
+model Group {
+    id            String    @id @default(auto()) @map("_id") @db.ObjectId
+    name          String
+    description   String?
+    lastMessageAt DateTime  @default(now())
+    unreadCount   Int       @default(0)
+    members       User[]    @relation(fields: [memberIds], references: [id])
+    messages      Message[] @relation("GroupMessages")
+    memberIds     String[]  @db.ObjectId
+    messageIds    String[]  @db.ObjectId
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+    deletedAt     DateTime?
+}
+
+model Conversation {
+    id            String    @id @default(auto()) @map("_id") @db.ObjectId
+    lastMessageAt DateTime  @default(now())
+    unreadCount   Int       @default(0)
+    messages      Message[] @relation("ConversationMessages")
+    user1Id       String    @db.ObjectId
+    user2Id       String    @db.ObjectId
+    user1         User      @relation("User1Conversations", fields: [user1Id], references: [id])
+    user2         User      @relation("User2Conversations", fields: [user2Id], references: [id])
+    createdAt     DateTime  @default(now())
+    updatedAt     DateTime  @updatedAt
+    deletedAt     DateTime?
+}
+
+model Message {
+    id             String        @id @default(auto()) @map("_id") @db.ObjectId
+    senderId       String        @db.ObjectId
+    receiverId     String?       @db.ObjectId
+    groupId        String?       @db.ObjectId
+    conversationId String?       @db.ObjectId
+    content        String
+    sender         User          @relation("MessagesSent", fields: [senderId], references: [id])
+    receiver       User?         @relation("MessagesReceived", fields: [receiverId], references: [id])
+    group          Group?        @relation("GroupMessages", fields: [groupId], references: [id])
+    conversation   Conversation? @relation("ConversationMessages", fields: [conversationId], references: [id])
+    createdAt      DateTime      @default(now())
+    updatedAt      DateTime      @updatedAt
+    deletedAt      DateTime?
+}
+
+//tao group,user rieng
+//send tin nhan thi tao conversation giua 2 nguoi 
+//nhan tin thi tao message giua 2 nguoi
+//nhan vao group thi tao message vao group 
